@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script
+            src="https://code.jquery.com/jquery-3.6.4.js"
+            integrity="sha256-a9jBBRygX1Bh5lt8GZjXDzyOB+bWve9EiO7tROUtj/E="
+            crossorigin="anonymous">
+
+    </script>
+</head>
+<body>
+     <script>
+         $(document).ready(
+
+             function (){
+
+                $.ajax({
+                     url: "http://localhost:8080/usuario/consultartodos",
+                     method:"GET"
+                }).then (function (data,status, info) {
+                      alert(data[1].telefones[0].numero);
+
+                });
+          }
+
+         );
+
+     </script>
+
+</body>
+</html>
