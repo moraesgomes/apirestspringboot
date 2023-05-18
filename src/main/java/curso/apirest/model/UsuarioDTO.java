@@ -7,45 +7,69 @@ public class UsuarioDTO implements Serializable{
 	
 	private static final long serialVersionUID = 1L;
 	
-	private String userlogin;
+	private Long id;
 	
-	private String usernome;
+	private String login;
 	
-	private String usercpf;
+	private String nome;
+	
+	private String senha;
+	
+	private String cpf;
 	
 	public UsuarioDTO(Usuario usuario) {
 		
-		this.userlogin = usuario.getLogin();
-		this.usernome = usuario.getNome();
-		this.usercpf = usuario.getCpf();
+		this.id = usuario.getId();
+		this.login = usuario.getLogin();
+		this.nome = usuario.getNome();
+		this.senha = usuario.getSenha();
+		this.cpf = usuario.getCpf();
+		
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public String getLogin() {
+		return login;
+	}
+
+	public void setLogin(String login) {
+		this.login = login;
+	}
+
+	public String getNome() {
+		return nome;
+	}
+
+	public void setNome(String nome) {
+		this.nome = nome;
+	}
+
+	public String getSenha() {
+		return senha;
+	}
+
+	public void setSenha(String senha) {
+		this.senha = senha;
+	}
+
+	public String getCpf() {
+		return cpf;
+	}
+
+	public void setCpf(String cpf) {
+		this.cpf = cpf;
 	}
 
 	
 
-	public String getUserlogin() {
-		return userlogin;
-	}
 
-	public void setUserlogin(String userlogin) {
-		this.userlogin = userlogin;
-	}
-
-	public String getUsernome() {
-		return usernome;
-	}
-
-	public void setUsernome(String usernome) {
-		this.usernome = usernome;
-	}
-
-	public String getUsercpf() {
-		return usercpf;
-	}
-
-	public void setUsercpf(String usercpf) {
-		this.usercpf = usercpf;
-	}
-	
 	
 
 }

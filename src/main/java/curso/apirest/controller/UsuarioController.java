@@ -1,31 +1,39 @@
 package curso.apirest.controller;
 
 
-import curso.apirest.model.Usuario;
-import curso.apirest.model.UsuarioDTO;
-import curso.apirest.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
-import com.google.gson.Gson;
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-// Essa anotação permite o acesso de qualquer servidor
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.google.gson.Gson;
+
+import curso.apirest.model.Usuario;
+import curso.apirest.model.UsuarioDTO;
+import curso.apirest.repository.UsuarioRepository;
+
+// Essa anotação permite o acesso de qualquer servidor
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping(value = "/usuario")
 public class UsuarioController {
@@ -46,7 +54,7 @@ public class UsuarioController {
     
 
     @GetMapping(value="/consultartodos",produces = "application/json")
-    @CacheEvict(value="cacheusuarios", allEntries = true)
+   // @CacheEvict(value="cacheusuarios", allEntries = true)
     @CachePut("cacheusuarios")
     public ResponseEntity<List<UsuarioDTO>> usuario (){
 
@@ -55,9 +63,9 @@ public class UsuarioController {
         		.map(usuario ->{
         			
         			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario);
-        			usuarioDTO.setUserlogin(usuario.getLogin());
-        			usuarioDTO.setUsernome(usuario.getNome());
-        			usuarioDTO.setUsercpf(usuario.getCpf());
+        			usuarioDTO.setLogin(usuario.getLogin());
+        			usuarioDTO.setNome(usuario.getNome());
+        			usuarioDTO.setCpf(usuario.getCpf());
         			
         			return usuarioDTO;
         		})
@@ -65,6 +73,27 @@ public class UsuarioController {
               .collect(Collectors.toList());
         return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos,HttpStatus.OK);
     }
+    
+     @GetMapping(value="/consultarnome/{nome}",produces = "application/json")
+    // @CacheEvict(value="cacheusuarios", allEntries = true)
+     @CachePut("cacheusuarios")
+     public ResponseEntity<List<UsuarioDTO>> usuarioPorNome(@PathVariable("nome") String nome){
+
+         List<Usuario> list = (List<Usuario>) usuarioRepository.findUserByNome(nome);
+         List<UsuarioDTO> listdtoDtos = list.stream()
+         		.map(usuario ->{
+         			
+         			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario);
+        			usuarioDTO.setLogin(usuario.getLogin());
+        			usuarioDTO.setNome(usuario.getNome());
+        			usuarioDTO.setCpf(usuario.getCpf());
+         			
+         			return usuarioDTO;
+         		})
+         		
+               .collect(Collectors.toList());
+         return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos,HttpStatus.OK);
+     }
 
 
 
@@ -80,7 +109,9 @@ public class UsuarioController {
 
         }
         
-        //** Consumindo uma api pública externa
+        if(usuario.getCep() != null) {
+        
+        // Consumindo uma api pública externa
         
            URL url = new URL("https://viacep.com.br/ws/"+usuario.getCep()+"/json/");
            URLConnection connection = url.openConnection();
@@ -103,7 +134,7 @@ public class UsuarioController {
            usuario.setLocalidade(userAux.getLocalidade());
            usuario.setUf(userAux.getUf());
            
-           
+        }   
         
 
         //** Consumindo uma api pública externa
@@ -124,7 +155,7 @@ public class UsuarioController {
 
         }
 
-        Usuario userTemporario = usuarioRepository.findUserByLogin(usuario.getLogin());
+        Usuario userTemporario = usuarioRepository.findById(usuario.getId()).get();
 
         if(!userTemporario.getSenha().equals(usuario.getSenha())){  /* Essa condição vai ser aplicada
         se as senhas forem diferentes*/

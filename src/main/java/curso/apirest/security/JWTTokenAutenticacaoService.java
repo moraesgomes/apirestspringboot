@@ -46,15 +46,18 @@ public class JWTTokenAutenticacaoService {
         String token = TOKEN_PREFIX + " " + JWT; /*Bearer  87877w8788w78877w*/
 
         /*Adiciona o cabeçalho com  o HTTP*/
-
+   
+       
+        
         response.addHeader(HEADER_STRING, token); /*Authorization:Bearer 8888deeee8w885www888*/
+        
         
         ApplicationContextLoad.getApplicationContext()
         .getBean(UsuarioRepository.class).atualizaTokenUser(JWT, username);
 
         /*Liberando resposta para portas diferentes que usam a API ou caso clientes web*/
-        liberacaoCors(response);
-
+       
+      
         /*Escreve token como resposta no corpo do HTTP*/
         response.getWriter().write("{\"Authorization\": \"" + token + "\"}");
     }
@@ -110,30 +113,12 @@ public class JWTTokenAutenticacaoService {
 			
 		}
         
-        liberacaoCors(response);
+       
         return null;
 
     }
 
-    private void liberacaoCors(HttpServletResponse response) {
-
-        if (response.getHeader("Access-Control-Allow-Origin") == null) {
-            response.addHeader("Access-Control-Allow-Origin", "*");
-        }
-
-        if (response.getHeader("Access-Control-Allow-Headers") == null) {
-            response.addHeader("Access-Control-Allow-Headers", "*");
-        }
-
-
-        if (response.getHeader("Access-Control-Request-Headers") == null) {
-            response.addHeader("Access-Control-Request-Headers", "*");
-        }
-
-        if(response.getHeader("Access-Control-Allow-Methods") == null) {
-            response.addHeader("Access-Control-Allow-Methods", "*");
-        }
-    }
+   
 
 }
 
