@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import curso.apirest.model.Usuario;
 import curso.apirest.model.UsuarioDTO;
 import curso.apirest.repository.UsuarioRepository;
+import curso.apirest.service.ImplementacaoUserDetailsService;
 
 // Essa anotação permite o acesso de qualquer servidor
 @CrossOrigin(origins = "*")
@@ -40,6 +41,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioRepository usuarioRepository;
+    
+    @Autowired
+    private ImplementacaoUserDetailsService implementacaoUserDetailsService;
 
     @GetMapping(value="/{id}",produces="application/json")//headers = "X-API-Version=v1")
     @CacheEvict(value="cacheuser", allEntries = true)
@@ -109,9 +113,11 @@ public class UsuarioController {
 
         }
         
+        // Consumindo uma api pública externa
+        
         if(usuario.getCep() != null) {
         
-        // Consumindo uma api pública externa
+      
         
            URL url = new URL("https://viacep.com.br/ws/"+usuario.getCep()+"/json/");
            URLConnection connection = url.openConnection();
@@ -140,6 +146,8 @@ public class UsuarioController {
         //** Consumindo uma api pública externa
 
         Usuario usersave = usuarioRepository.save(usuario);
+        
+        implementacaoUserDetailsService.insereAcessoPadrao(usersave.getId());
 
         return new ResponseEntity<Usuario>(usersave,HttpStatus.OK);
 

@@ -1,6 +1,7 @@
 package curso.apirest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import org.hibernate.validator.constraints.br.CPF;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,7 +24,7 @@ public class Usuario implements UserDetails {
     private String login;
     private String senha;
     private String nome;
-    @CPF(message = "CPF inválido!")
+    @CPF(message= "CPF Inválido")
     private String cpf;
     private String cep;
     private String logradouro;
@@ -37,7 +38,7 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "usuario",orphanRemoval = true,cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<Telefone> telefones = new ArrayList<Telefone>();
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuarios_role",uniqueConstraints = @UniqueConstraint(
         columnNames = {"usuario_id","role_id"},name = "unique_role_user"),
     joinColumns = @JoinColumn(name = "usuario_id",referencedColumnName = "id",table = "usuario", unique = false,
