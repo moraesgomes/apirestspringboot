@@ -1,6 +1,5 @@
 package curso.apirest.controller;
 
-
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,8 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
+import curso.apirest.model.Telefone;
 import curso.apirest.model.Usuario;
 import curso.apirest.model.UsuarioDTO;
+import curso.apirest.repository.TelefoneRepository;
 import curso.apirest.repository.UsuarioRepository;
 import curso.apirest.service.ImplementacaoUserDetailsService;
 
@@ -39,155 +40,170 @@ import curso.apirest.service.ImplementacaoUserDetailsService;
 @RequestMapping(value = "/usuario")
 public class UsuarioController {
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-    
-    @Autowired
-    private ImplementacaoUserDetailsService implementacaoUserDetailsService;
+	@Autowired
+	private UsuarioRepository usuarioRepository;
+	
+	@Autowired
+	private TelefoneRepository telefoneRepository;
 
-    @GetMapping(value="/{id}",produces="application/json")//headers = "X-API-Version=v1")
-    @CacheEvict(value="cacheuser", allEntries = true)
-    @CachePut("cacheuser")
-    public ResponseEntity<UsuarioDTO> inicioV1(@PathVariable (value = "id") Long id){
+	@Autowired
+	private ImplementacaoUserDetailsService implementacaoUserDetailsService;
 
-        Optional <Usuario> usuario = usuarioRepository.findById(id);
-       
-        return new ResponseEntity<UsuarioDTO>(new UsuarioDTO(usuario.get()),HttpStatus.OK);
-    }
+	@GetMapping(value = "/{id}", produces = "application/json")
+	@CacheEvict(value = "cacheuser", allEntries = true)
+	@CachePut("cacheuser")
+	public ResponseEntity<UsuarioDTO> inicioV1(@PathVariable(value = "id") Long id) {
 
-    
+	    Optional<Usuario> usuario = usuarioRepository.findById(id);
 
-    @GetMapping(value="/consultartodos",produces = "application/json")
-   // @CacheEvict(value="cacheusuarios", allEntries = true)
-    @CachePut("cacheusuarios")
-    public ResponseEntity<List<UsuarioDTO>> usuario (){
+	    if (usuario.isPresent()) {
+	        List<Telefone> telefones = usuario.get().getTelefones();
 
-        List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
-        List<UsuarioDTO> listdtoDtos = list.stream()
-        		.map(usuario ->{
-        			
-        			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario);
-        			usuarioDTO.setLogin(usuario.getLogin());
-        			usuarioDTO.setNome(usuario.getNome());
-        			usuarioDTO.setCpf(usuario.getCpf());
-        			
-        			return usuarioDTO;
-        		})
-        		
-              .collect(Collectors.toList());
-        return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos,HttpStatus.OK);
-    }
-    
-     @GetMapping(value="/consultarnome/{nome}",produces = "application/json")
-    // @CacheEvict(value="cacheusuarios", allEntries = true)
-     @CachePut("cacheusuarios")
-     public ResponseEntity<List<UsuarioDTO>> usuarioPorNome(@PathVariable("nome") String nome){
+	        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario.get(), telefones);
 
-         List<Usuario> list = (List<Usuario>) usuarioRepository.findUserByNome(nome);
-         List<UsuarioDTO> listdtoDtos = list.stream()
-         		.map(usuario ->{
-         			
-         			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario);
-        			usuarioDTO.setLogin(usuario.getLogin());
-        			usuarioDTO.setNome(usuario.getNome());
-        			usuarioDTO.setCpf(usuario.getCpf());
-         			
-         			return usuarioDTO;
-         		})
-         		
-               .collect(Collectors.toList());
-         return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos,HttpStatus.OK);
-     }
+	        return new ResponseEntity<>(usuarioDTO, HttpStatus.OK);
+	    } else {
+	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+	    }
+	}
 
+	@GetMapping(value = "/consultartodos", produces = "application/json")
+	// @CacheEvict(value="cacheusuarios", allEntries = true)
+	@CachePut("cacheusuarios")
+	public ResponseEntity<List<UsuarioDTO>> usuario() {
 
+		List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
+		List<UsuarioDTO> listdtoDtos = list.stream().map(usuario -> {
 
-    @PostMapping(value = "/cadastrar", produces = "application/json")
-    public ResponseEntity<Usuario>cadastrar(@RequestBody Usuario usuario) throws Exception{
+			List<Telefone> telefones = usuario.getTelefones();
 
-        String senhacriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
-        usuario.setSenha(senhacriptografada);
+			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+			usuarioDTO.setLogin(usuario.getLogin());
+			usuarioDTO.setNome(usuario.getNome());
+			usuarioDTO.setCpf(usuario.getCpf());
 
-        for(int pos = 0; pos < usuario.getTelefones().size();pos ++) {
+			return usuarioDTO;
+		})
 
-            usuario.getTelefones().get(pos).setUsuario(usuario);
+				.collect(Collectors.toList());
+		return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos, HttpStatus.OK);
+	}
 
-        }
-        
-        // Consumindo uma api pública externa
-        
-        if(usuario.getCep() != null) {
-        
-      
-        
-           URL url = new URL("https://viacep.com.br/ws/"+usuario.getCep()+"/json/");
-           URLConnection connection = url.openConnection();
-           InputStream is = connection.getInputStream();
-           BufferedReader br = new BufferedReader(new InputStreamReader(is,"UTF-8"));
-           
-           String cep = "";
-           StringBuilder jsoncep = new StringBuilder();
-           
-           while((cep = br.readLine()) !=null) {
-        	   
-        	   jsoncep.append(cep);
-           }
-           
-           Usuario userAux = new Gson().fromJson(jsoncep.toString(), Usuario.class);
-           usuario.setCep(userAux.getCep());
-           usuario.setLogradouro(userAux.getLogradouro());
-           usuario.setComplemento(userAux.getComplemento());
-           usuario.setBairro(userAux.getBairro());
-           usuario.setLocalidade(userAux.getLocalidade());
-           usuario.setUf(userAux.getUf());
-           
-        }   
-        
+	@GetMapping(value = "/consultarnome/{nome}", produces = "application/json")
+	// @CacheEvict(value="cacheusuarios", allEntries = true)
+	@CachePut("cacheusuarios")
+	public ResponseEntity<List<UsuarioDTO>> usuarioPorNome(@PathVariable("nome") String nome) {
 
-        //** Consumindo uma api pública externa
+		List<Usuario> list = (List<Usuario>) usuarioRepository.findUserByNome(nome);
+		List<UsuarioDTO> listdtoDtos = list.stream().map(usuario -> {
+			List<Telefone> telefones = usuario.getTelefones();
 
-        Usuario usersave = usuarioRepository.save(usuario);
-        
-        implementacaoUserDetailsService.insereAcessoPadrao(usersave.getId());
+			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
 
-        return new ResponseEntity<Usuario>(usersave,HttpStatus.OK);
+			usuarioDTO.setLogin(usuario.getLogin());
+			usuarioDTO.setNome(usuario.getNome());
+			usuarioDTO.setCpf(usuario.getCpf());
 
-    }
+			return usuarioDTO;
+		})
 
-    @PutMapping(value = "/", produces = "application/json")
-    public ResponseEntity<Usuario>atualizar(@RequestBody Usuario usuario){
+				.collect(Collectors.toList());
+		return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos, HttpStatus.OK);
+	}
 
+	@PostMapping(value = "/cadastrar", produces = "application/json")
+	public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) throws Exception {
 
-        for(int pos = 0; pos < usuario.getTelefones().size();pos ++) {
+		String senhacriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
+		usuario.setSenha(senhacriptografada);
 
-            usuario.getTelefones().get(pos).setUsuario(usuario);
+		for (int pos = 0; pos < usuario.getTelefones().size(); pos++) {
 
-        }
+			usuario.getTelefones().get(pos).setUsuario(usuario);
 
-        Usuario userTemporario = usuarioRepository.findById(usuario.getId()).get();
+		}
 
-        if(!userTemporario.getSenha().equals(usuario.getSenha())){  /* Essa condição vai ser aplicada
-        se as senhas forem diferentes*/
+		// Consumindo uma api pública externa
 
-            String senhacriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
-            usuario.setSenha(senhacriptografada);
+		if (usuario.getCep() != null) {
 
-        }
+			URL url = new URL("https://viacep.com.br/ws/" + usuario.getCep() + "/json/");
+			URLConnection connection = url.openConnection();
+			InputStream is = connection.getInputStream();
+			BufferedReader br = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 
-        Usuario usersave= usuarioRepository.save(usuario);
+			String cep = "";
+			StringBuilder jsoncep = new StringBuilder();
 
-        return new ResponseEntity<Usuario>(usersave,HttpStatus.OK);
+			while ((cep = br.readLine()) != null) {
 
-    }
+				jsoncep.append(cep);
+			}
 
-    @DeleteMapping(value="/{id}" , produces = "application/text")
-    public String delete (@PathVariable("id") Long id) {
+			Usuario userAux = new Gson().fromJson(jsoncep.toString(), Usuario.class);
+			usuario.setCep(userAux.getCep());
+			usuario.setLogradouro(userAux.getLogradouro());
+			usuario.setComplemento(userAux.getComplemento());
+			usuario.setBairro(userAux.getBairro());
+			usuario.setLocalidade(userAux.getLocalidade());
+			usuario.setUf(userAux.getUf());
 
-        usuarioRepository.deleteById(id);
+		}
 
-        return "ok";
+		// ** Consumindo uma api pública externa
 
+		Usuario usersave = usuarioRepository.save(usuario);
 
-    }
+		implementacaoUserDetailsService.insereAcessoPadrao(usersave.getId());
 
+		return new ResponseEntity<Usuario>(usersave, HttpStatus.OK);
+
+	}
+	
+	@DeleteMapping(value = "/removerfone/{id}",produces = "application/text")
+	public String deleteFone(@PathVariable("id") Long id) {
+		
+		telefoneRepository.deleteById(id);
+		
+		return "ok";
+		
+		
+	}
+
+	@PutMapping(value = "/", produces = "application/json")
+	public ResponseEntity<Usuario> atualizar(@RequestBody Usuario usuario) {
+
+		for (int pos = 0; pos < usuario.getTelefones().size(); pos++) {
+
+			usuario.getTelefones().get(pos).setUsuario(usuario);
+
+		}
+
+		Usuario userTemporario = usuarioRepository.findById(usuario.getId()).get();
+
+		if (!userTemporario.getSenha()
+				.equals(usuario.getSenha())) { /*
+												 * Essa condição vai ser aplicada se as senhas forem diferentes
+												 */
+
+			String senhacriptografada = new BCryptPasswordEncoder().encode(usuario.getSenha());
+			usuario.setSenha(senhacriptografada);
+
+		}
+
+		Usuario usersave = usuarioRepository.save(usuario);
+
+		return new ResponseEntity<Usuario>(usersave, HttpStatus.OK);
+
+	}
+
+	@DeleteMapping(value = "/{id}", produces = "application/text")
+	public String delete(@PathVariable("id") Long id) {
+
+		usuarioRepository.deleteById(id);
+
+		return "ok";
+
+	}
 
 }

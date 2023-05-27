@@ -1,6 +1,8 @@
 package curso.apirest.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UsuarioDTO implements Serializable{
 
@@ -17,7 +19,9 @@ public class UsuarioDTO implements Serializable{
 	
 	private String cpf;
 	
-	public UsuarioDTO(Usuario usuario) {
+	private List<Telefone> telefones = new ArrayList<Telefone>();
+	
+	public UsuarioDTO(Usuario usuario , List<Telefone> fones) {
 		
 		this.id = usuario.getId();
 		this.login = usuario.getLogin();
@@ -25,7 +29,15 @@ public class UsuarioDTO implements Serializable{
 		this.senha = usuario.getSenha();
 		this.cpf = usuario.getCpf();
 		
+		for (Telefone telefone : fones) {
+			 this.telefones.add(telefone);
+        }
+		
 	}
+	
+	
+	
+	
 
 	public Long getId() {
 		return id;
@@ -65,6 +77,14 @@ public class UsuarioDTO implements Serializable{
 
 	public void setCpf(String cpf) {
 		this.cpf = cpf;
+	}
+	
+	public void setTelefones(List<Telefone> telefones) {
+		this.telefones = telefones;
+	}
+	
+	public List<Telefone> getTelefones() {
+		return telefones;
 	}
 
 	
