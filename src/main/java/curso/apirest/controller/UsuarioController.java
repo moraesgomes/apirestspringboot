@@ -12,6 +12,10 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -42,7 +46,7 @@ public class UsuarioController {
 
 	@Autowired
 	private UsuarioRepository usuarioRepository;
-	
+
 	@Autowired
 	private TelefoneRepository telefoneRepository;
 
@@ -54,26 +58,29 @@ public class UsuarioController {
 	@CachePut("cacheuser")
 	public ResponseEntity<UsuarioDTO> inicioV1(@PathVariable(value = "id") Long id) {
 
-	    Optional<Usuario> usuario = usuarioRepository.findById(id);
+		Optional<Usuario> usuario = usuarioRepository.findById(id);
 
-	    if (usuario.isPresent()) {
-	        List<Telefone> telefones = usuario.get().getTelefones();
+		if (usuario.isPresent()) {
+			List<Telefone> telefones = usuario.get().getTelefones();
 
-	        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario.get(), telefones);
+			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario.get(), telefones);
 
-	        return new ResponseEntity<>(usuarioDTO, HttpStatus.OK);
-	    } else {
-	        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-	    }
+			return new ResponseEntity<>(usuarioDTO, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
 	}
 
-	@GetMapping(value = "/consultartodos", produces = "application/json")
+	@GetMapping(value = "/", produces = "application/json")
 	// @CacheEvict(value="cacheusuarios", allEntries = true)
 	@CachePut("cacheusuarios")
-	public ResponseEntity<List<UsuarioDTO>> usuario() {
+	public ResponseEntity<Page<UsuarioDTO>> usuario() {
 
-		List<Usuario> list = (List<Usuario>) usuarioRepository.findAll();
-		List<UsuarioDTO> listdtoDtos = list.stream().map(usuario -> {
+		PageRequest page = PageRequest.of(0, 5, Sort.by("nome"));
+
+		Page<Usuario> list = usuarioRepository.findAll(page);
+
+		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
 
 			List<Telefone> telefones = usuario.getTelefones();
 
@@ -86,16 +93,61 @@ public class UsuarioController {
 		})
 
 				.collect(Collectors.toList());
-		return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos, HttpStatus.OK);
+
+		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, page, listDtos.size());
+
+		return new ResponseEntity<>(pageDtos, HttpStatus.OK);
+	}
+
+	@GetMapping(value = "/page/{pagina}", produces = "application/json")
+	@CachePut("cacheusuarios")
+	public ResponseEntity<Page<UsuarioDTO>> usuarioPagina(@PathVariable("pagina") int pagina) {
+
+		PageRequest page = PageRequest.of(pagina, 3, Sort.by("nome"));
+
+		Page<Usuario> list = usuarioRepository.findAll(page);
+
+		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
+
+			List<Telefone> telefones = usuario.getTelefones();
+
+			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+			usuarioDTO.setLogin(usuario.getLogin());
+			usuarioDTO.setNome(usuario.getNome());
+			usuarioDTO.setCpf(usuario.getCpf());
+
+			return usuarioDTO;
+		})
+
+				.collect(Collectors.toList());
+
+		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, page, listDtos.size());
+
+		return new ResponseEntity<>(pageDtos, HttpStatus.OK);
 	}
 
 	@GetMapping(value = "/consultarnome/{nome}", produces = "application/json")
 	// @CacheEvict(value="cacheusuarios", allEntries = true)
 	@CachePut("cacheusuarios")
-	public ResponseEntity<List<UsuarioDTO>> usuarioPorNome(@PathVariable("nome") String nome) {
+	public ResponseEntity<Page<UsuarioDTO>> usuarioPorNome(@PathVariable("nome") String nome) throws Exception {
+		
+		PageRequest page = null;
+		Page<Usuario> list = null;
+		
+		if (nome == null || (nome != null && nome.trim().isEmpty())
+				|| nome.equalsIgnoreCase("undefined")) {
+			
+			page = PageRequest.of(0, 3,Sort.by("nome"));
+		    list = usuarioRepository.findAll(page);
+			
+		}else {
+			
+			page = PageRequest.of(0, 3,Sort.by("nome"));
+			list = usuarioRepository.findUserByNamePage(nome,page);
+		}
 
-		List<Usuario> list = (List<Usuario>) usuarioRepository.findUserByNome(nome);
-		List<UsuarioDTO> listdtoDtos = list.stream().map(usuario -> {
+		
+		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
 			List<Telefone> telefones = usuario.getTelefones();
 
 			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
@@ -108,7 +160,47 @@ public class UsuarioController {
 		})
 
 				.collect(Collectors.toList());
-		return new ResponseEntity<List<UsuarioDTO>>(listdtoDtos, HttpStatus.OK);
+		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, page, listDtos.size());
+		return new ResponseEntity<Page<UsuarioDTO>>(pageDtos, HttpStatus.OK);
+	}
+	
+	
+	@GetMapping(value = "/consultarnome/{nome}/page/{page}", produces = "application/json")
+	// @CacheEvict(value="cacheusuarios", allEntries = true)
+	@CachePut("cacheusuarios")
+	public ResponseEntity<Page<UsuarioDTO>> usuarioPorNomePage(@PathVariable("nome") String nome, @PathVariable("page") int page) throws Exception {
+		
+		PageRequest pageRequest = null;
+		Page<Usuario> list = null;
+		
+		if (nome == null || (nome != null && nome.trim().isEmpty())
+				|| nome.equalsIgnoreCase("undefined")) {
+			
+			pageRequest = PageRequest.of(page, 3,Sort.by("nome"));
+		    list = usuarioRepository.findAll(pageRequest);
+			
+		}else {
+			
+			pageRequest = PageRequest.of(page, 3,Sort.by("nome"));
+			list = usuarioRepository.findUserByNamePage(nome,pageRequest);
+		}
+
+		
+		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
+			List<Telefone> telefones = usuario.getTelefones();
+
+			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+
+			usuarioDTO.setLogin(usuario.getLogin());
+			usuarioDTO.setNome(usuario.getNome());
+			usuarioDTO.setCpf(usuario.getCpf());
+
+			return usuarioDTO;
+		})
+
+				.collect(Collectors.toList());
+		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, pageRequest, listDtos.size());
+		return new ResponseEntity<Page<UsuarioDTO>>(pageDtos, HttpStatus.OK);
 	}
 
 	@PostMapping(value = "/cadastrar", produces = "application/json")
@@ -159,15 +251,14 @@ public class UsuarioController {
 		return new ResponseEntity<Usuario>(usersave, HttpStatus.OK);
 
 	}
-	
-	@DeleteMapping(value = "/removerfone/{id}",produces = "application/text")
+
+	@DeleteMapping(value = "/removerfone/{id}", produces = "application/text")
 	public String deleteFone(@PathVariable("id") Long id) {
-		
+
 		telefoneRepository.deleteById(id);
-		
+
 		return "ok";
-		
-		
+
 	}
 
 	@PutMapping(value = "/", produces = "application/json")

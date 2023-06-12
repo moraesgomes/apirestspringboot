@@ -1,14 +1,18 @@
 package curso.apirest.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import org.hibernate.validator.constraints.br.CPF;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,6 +50,19 @@ public class Usuario implements UserDetails {
     inverseJoinColumns = @JoinColumn(name = "role_id",referencedColumnName = "id",table = "role", unique = false,updatable = false,
     foreignKey = @ForeignKey (name = "role_fk",value = ConstraintMode.CONSTRAINT)))
     private List<Role> roles = new ArrayList<Role>();
+    
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    @Temporal(TemporalType.DATE)
+    @DateTimeFormat(iso = ISO.DATE, pattern = "dd/MM/yyyy")
+    private Date dataNascimento;
+    
+    public void setDataNascimento(Date dataNascimento) {
+		this.dataNascimento = dataNascimento;
+	}
+    
+    public Date getDataNascimento() {
+		return dataNascimento;
+	}
     
     
 
@@ -159,7 +176,7 @@ public class Usuario implements UserDetails {
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
+    public Collection<Role> getAuthorities() {
         return roles;
     }
 
