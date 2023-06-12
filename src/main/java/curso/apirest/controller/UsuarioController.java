@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -242,7 +243,13 @@ public class UsuarioController {
 
 		}
 
-		// ** Consumindo uma api pública externa
+	
+		
+	 // Formatando a data de nascimento para o formato pt-BR
+		
+	    SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+	    String dataNascimentoFormatada = sdf.format(usuario.getDataNascimento());
+	    usuario.setDataNascimento(sdf.parse(dataNascimentoFormatada));
 
 		Usuario usersave = usuarioRepository.save(usuario);
 
