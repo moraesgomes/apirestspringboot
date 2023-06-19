@@ -39,8 +39,11 @@ public class Application implements WebMvcConfigurer {
 		registry.addMapping("/usuario/**")
 				.allowedMethods("*")
 				.allowedOrigins("*");
-		/* Liberando o mapeamento de usuários para todas as origens*/
-
+		
+		registry.addMapping("/profissao/**")
+		.allowedMethods("*")
+		.allowedOrigins("*");
+		
 	}
 
 }

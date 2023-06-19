@@ -32,9 +32,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
 
+import curso.apirest.model.Profissao;
 import curso.apirest.model.Telefone;
 import curso.apirest.model.Usuario;
 import curso.apirest.model.UsuarioDTO;
+import curso.apirest.repository.ProfissaoRepository;
 import curso.apirest.repository.TelefoneRepository;
 import curso.apirest.repository.UsuarioRepository;
 import curso.apirest.service.ImplementacaoUserDetailsService;
@@ -53,6 +55,9 @@ public class UsuarioController {
 
 	@Autowired
 	private ImplementacaoUserDetailsService implementacaoUserDetailsService;
+	
+	@Autowired
+	private ProfissaoRepository profissaoRepository;
 
 	@GetMapping(value = "/{id}", produces = "application/json")
 	@CacheEvict(value = "cacheuser", allEntries = true)
@@ -242,6 +247,8 @@ public class UsuarioController {
 			usuario.setUf(userAux.getUf());
 
 		}
+		
+
 
 	
 		
