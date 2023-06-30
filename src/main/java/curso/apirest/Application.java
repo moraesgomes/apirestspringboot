@@ -44,6 +44,10 @@ public class Application implements WebMvcConfigurer {
 		.allowedMethods("*")
 		.allowedOrigins("*");
 		
+		registry.addMapping("/recuperar/**")
+		.allowedMethods("*")
+		.allowedOrigins("*");
+		
 	}
 
 }
