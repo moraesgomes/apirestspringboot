@@ -68,7 +68,7 @@ public class Usuario implements UserDetails {
     foreignKey = @ForeignKey (name = "role_fk",value = ConstraintMode.CONSTRAINT)))
     private List<Role> roles = new ArrayList<Role>();
     
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy", locale = "pt-BR", timezone = "Brazil/Eastshape = JsonFormat.Shape.STRING, pattern = \"dd/MM/yyyy\", locale = \"pt-BR\", timezone = \"Brazil/East")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy", locale = "pt-BR", timezone = "Brazil/East")
     @Temporal(TemporalType.DATE)
     @DateTimeFormat(iso = ISO.DATE, pattern = "dd/MM/yyyy")
     private Date dataNascimento;

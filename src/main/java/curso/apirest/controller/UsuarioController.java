@@ -76,138 +76,103 @@ public class UsuarioController {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 	}
+	
+	
 
 	@GetMapping(value = "/", produces = "application/json")
-	// @CacheEvict(value="cacheusuarios", allEntries = true)
 	@CachePut("cacheusuarios")
 	public ResponseEntity<Page<UsuarioDTO>> usuario() {
+		
+	    PageRequest page = PageRequest.of(0, 5, Sort.by("nome"));
+	    Page<Usuario> list = usuarioRepository.findAll(page);
 
-		PageRequest page = PageRequest.of(0, 5, Sort.by("nome"));
+	    Page<UsuarioDTO> pageDtos = list.map(usuario -> {
+	        List<Telefone> telefones = usuario.getTelefones();
+	        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+	        usuarioDTO.setLogin(usuario.getLogin());
+	        usuarioDTO.setNome(usuario.getNome());
+	        usuarioDTO.setCpf(usuario.getCpf());
+	        return usuarioDTO;
+	    });
 
-		Page<Usuario> list = usuarioRepository.findAll(page);
-
-		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
-
-			List<Telefone> telefones = usuario.getTelefones();
-
-			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
-			usuarioDTO.setLogin(usuario.getLogin());
-			usuarioDTO.setNome(usuario.getNome());
-			usuarioDTO.setCpf(usuario.getCpf());
-
-			return usuarioDTO;
-		})
-
-				.collect(Collectors.toList());
-
-		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, page, listDtos.size());
-
-		return new ResponseEntity<>(pageDtos, HttpStatus.OK);
+	    return new ResponseEntity<>(pageDtos, HttpStatus.OK);
 	}
-
-	@GetMapping(value = "/page/{pagina}", produces = "application/json")
+	
+	@GetMapping(value="/page/{pagina}", produces = "application/json")
 	@CachePut("cacheusuarios")
 	public ResponseEntity<Page<UsuarioDTO>> usuarioPagina(@PathVariable("pagina") int pagina) {
+	    int pageSize = 5; 
+	    PageRequest page = PageRequest.of(pagina - 1, pageSize, Sort.by("nome"));
+	    Page<Usuario> list = usuarioRepository.findAll(page);
 
-		PageRequest page = PageRequest.of(pagina, 3, Sort.by("nome"));
+	    Page<UsuarioDTO> pageDtos = list.map(usuario -> {
+	        List<Telefone> telefones = usuario.getTelefones();
+	        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+	        usuarioDTO.setLogin(usuario.getLogin());
+	        usuarioDTO.setNome(usuario.getNome());
+	        usuarioDTO.setCpf(usuario.getCpf());
+	        return usuarioDTO;
+	    });
 
-		Page<Usuario> list = usuarioRepository.findAll(page);
-
-		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
-
-			List<Telefone> telefones = usuario.getTelefones();
-
-			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
-			usuarioDTO.setLogin(usuario.getLogin());
-			usuarioDTO.setNome(usuario.getNome());
-			usuarioDTO.setCpf(usuario.getCpf());
-
-			return usuarioDTO;
-		})
-
-				.collect(Collectors.toList());
-
-		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, page, listDtos.size());
-
-		return new ResponseEntity<>(pageDtos, HttpStatus.OK);
+	    return new ResponseEntity<>(pageDtos, HttpStatus.OK);
 	}
 
 	@GetMapping(value = "/consultarnome/{nome}", produces = "application/json")
-	// @CacheEvict(value="cacheusuarios", allEntries = true)
 	@CachePut("cacheusuarios")
 	public ResponseEntity<Page<UsuarioDTO>> usuarioPorNome(@PathVariable("nome") String nome) throws Exception {
-		
-		PageRequest page = null;
-		Page<Usuario> list = null;
-		
-		if (nome == null || (nome != null && nome.trim().isEmpty())
-				|| nome.equalsIgnoreCase("undefined")) {
-			
-			page = PageRequest.of(0, 3,Sort.by("nome"));
-		    list = usuarioRepository.findAll(page);
-			
-		}else {
-			
-			page = PageRequest.of(0, 3,Sort.by("nome"));
-			list = usuarioRepository.findUserByNamePage(nome,page);
-		}
+	    PageRequest page = null;
+	    Page<Usuario> list = null;
 
-		
-		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
-			List<Telefone> telefones = usuario.getTelefones();
+	    if (nome == null || (nome != null && nome.trim().isEmpty()) || nome.equalsIgnoreCase("undefined")) {
+	        page = PageRequest.of(0, 5, Sort.by("nome"));
+	        list = usuarioRepository.findAll(page);
+	    } else {
+	        page = PageRequest.of(0, 5, Sort.by("nome"));
+	        list = usuarioRepository.findUserByNamePage(nome, page);
+	    }
 
-			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+	    Page<UsuarioDTO> pageDtos = list.map(usuario -> {
+	        List<Telefone> telefones = usuario.getTelefones();
+	        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+	        usuarioDTO.setLogin(usuario.getLogin());
+	        usuarioDTO.setNome(usuario.getNome());
+	        usuarioDTO.setCpf(usuario.getCpf());
+	        return usuarioDTO;
+	    });
 
-			usuarioDTO.setLogin(usuario.getLogin());
-			usuarioDTO.setNome(usuario.getNome());
-			usuarioDTO.setCpf(usuario.getCpf());
-
-			return usuarioDTO;
-		})
-
-				.collect(Collectors.toList());
-		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, page, listDtos.size());
-		return new ResponseEntity<Page<UsuarioDTO>>(pageDtos, HttpStatus.OK);
+	    return new ResponseEntity<>(pageDtos, HttpStatus.OK);
 	}
+
 	
 	
 	@GetMapping(value = "/consultarnome/{nome}/page/{page}", produces = "application/json")
-	// @CacheEvict(value="cacheusuarios", allEntries = true)
 	@CachePut("cacheusuarios")
 	public ResponseEntity<Page<UsuarioDTO>> usuarioPorNomePage(@PathVariable("nome") String nome, @PathVariable("page") int page) throws Exception {
-		
-		PageRequest pageRequest = null;
-		Page<Usuario> list = null;
-		
-		if (nome == null || (nome != null && nome.trim().isEmpty())
-				|| nome.equalsIgnoreCase("undefined")) {
-			
-			pageRequest = PageRequest.of(page, 3,Sort.by("nome"));
-		    list = usuarioRepository.findAll(pageRequest);
-			
-		}else {
-			
-			pageRequest = PageRequest.of(page, 3,Sort.by("nome"));
-			list = usuarioRepository.findUserByNamePage(nome,pageRequest);
-		}
+	    PageRequest pageRequest = null;
+	    Page<Usuario> list = null;
 
-		
-		List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
-			List<Telefone> telefones = usuario.getTelefones();
+	    if (nome == null || (nome != null && nome.trim().isEmpty()) || nome.equalsIgnoreCase("undefined")) {
+	        pageRequest = PageRequest.of(page, 5, Sort.by("nome"));
+	        list = usuarioRepository.findAll(pageRequest);
+	    } else {
+	        pageRequest = PageRequest.of(page, 5, Sort.by("nome"));
+	        list = usuarioRepository.findUserByNamePage(nome, pageRequest);
+	    }
 
-			UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+	    List<UsuarioDTO> listDtos = list.stream().map(usuario -> {
+	        List<Telefone> telefones = usuario.getTelefones();
+	        UsuarioDTO usuarioDTO = new UsuarioDTO(usuario, telefones);
+	        usuarioDTO.setLogin(usuario.getLogin());
+	        usuarioDTO.setNome(usuario.getNome());
+	        usuarioDTO.setCpf(usuario.getCpf());
+	        return usuarioDTO;
+	    }).collect(Collectors.toList());
 
-			usuarioDTO.setLogin(usuario.getLogin());
-			usuarioDTO.setNome(usuario.getNome());
-			usuarioDTO.setCpf(usuario.getCpf());
-
-			return usuarioDTO;
-		})
-
-				.collect(Collectors.toList());
-		Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, pageRequest, listDtos.size());
-		return new ResponseEntity<Page<UsuarioDTO>>(pageDtos, HttpStatus.OK);
+	    Page<UsuarioDTO> pageDtos = new PageImpl<>(listDtos, pageRequest, list.getTotalElements());
+	    return new ResponseEntity<>(pageDtos, HttpStatus.OK);
 	}
+
+
 
 	@PostMapping(value = "/cadastrar", produces = "application/json")
 	public ResponseEntity<Usuario> cadastrar(@RequestBody Usuario usuario) throws Exception {
@@ -248,9 +213,6 @@ public class UsuarioController {
 
 		}
 		
-
-
-	
 		
 	 // Formatando a data de nascimento para o formato pt-BR
 		

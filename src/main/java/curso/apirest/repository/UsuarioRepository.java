@@ -40,20 +40,20 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
       @Query(value = "update usuario set senha = ?1 where id = ?2",nativeQuery = true)
       void updateSenha(String senha,Long codUser);
 
-	default Page<Usuario> findUserByNamePage(String nome, PageRequest page){
-		
-		Usuario usuario = new Usuario();
-		usuario.setNome(nome);
-		
-		ExampleMatcher exampleMatcher = ExampleMatcher.matchingAny()
-				.withMatcher("nome", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase());
-		
-		Example<Usuario> example = Example.of(usuario,exampleMatcher);
-		
-		Page<Usuario> retorno = findAll(example,page);
-		
-		return retorno;
-	}
+      default Page<Usuario> findUserByNamePage(String nome, PageRequest page) {
+    	  
+    	    Usuario usuario = new Usuario();
+    	    usuario.setNome(nome);
+
+    	    ExampleMatcher exampleMatcher = ExampleMatcher.matchingAny()
+    	            .withMatcher("nome", ExampleMatcher.GenericPropertyMatchers.contains().ignoreCase());
+
+    	    Example<Usuario> example = Example.of(usuario, exampleMatcher);
+
+    	    Page<Usuario> retorno = findAll(example, page);
+
+    	    return retorno;
+    	}
       
       
      
