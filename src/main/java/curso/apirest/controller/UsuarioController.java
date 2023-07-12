@@ -6,10 +6,16 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -34,12 +40,14 @@ import com.google.gson.Gson;
 
 import curso.apirest.model.Profissao;
 import curso.apirest.model.Telefone;
+import curso.apirest.model.UserReport;
 import curso.apirest.model.Usuario;
 import curso.apirest.model.UsuarioDTO;
 import curso.apirest.repository.ProfissaoRepository;
 import curso.apirest.repository.TelefoneRepository;
 import curso.apirest.repository.UsuarioRepository;
 import curso.apirest.service.ImplementacaoUserDetailsService;
+import curso.apirest.service.ServiceRelatorio;
 
 // Essa anotação permite o acesso de qualquer servidor
 @CrossOrigin(origins = "*")
@@ -58,6 +66,9 @@ public class UsuarioController {
 	
 	@Autowired
 	private ProfissaoRepository profissaoRepository;
+	
+	@Autowired
+	private ServiceRelatorio serviceRelatorio;
 
 	@GetMapping(value = "/{id}", produces = "application/json")
 	@CacheEvict(value = "cacheuser", allEntries = true)
@@ -271,6 +282,46 @@ public class UsuarioController {
 
 		return "ok";
 
+	}
+	
+	@GetMapping(value = "/relatorio" , produces ="application/text" )
+	public ResponseEntity<String> downloadRelatorio(HttpServletRequest request) throws Exception{
+		
+		byte[] pdf = serviceRelatorio.gerarRelatorio("relatorio-usuario", new HashMap(),
+				request.getServletContext());
+		
+		
+		String base64Pdf ="data:application/pdf;base64," +  Base64.encodeBase64String(pdf);
+		
+		return new ResponseEntity<String>(base64Pdf,HttpStatus.OK);
+		
+	}
+	
+	
+	@PostMapping(value = "/relatorio/" , produces ="application/text" )
+	public ResponseEntity<String> downloadRelatorioParam(HttpServletRequest request, @RequestBody UserReport userReport) throws Exception{
+		
+		SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+		
+		SimpleDateFormat datFormatParam = new SimpleDateFormat("yyyy-MM-dd");
+		
+		String dataInicio = datFormatParam.format(dateFormat.parse(userReport.getDataInicio()));
+		
+		String dataFim = datFormatParam.format(dateFormat.parse(userReport.getDataFim()));
+		
+		Map<String,Object> params = new HashMap<String,Object>();
+		
+		params.put("DATA_INICIO", dataInicio);
+		params.put("DATA_FIM", dataFim);
+		
+		byte[] pdf = serviceRelatorio.gerarRelatorio("relatorio-usuario-param", params,
+				request.getServletContext());
+		
+		
+		String base64Pdf ="data:application/pdf;base64," +  Base64.encodeBase64String(pdf);
+		
+		return new ResponseEntity<String>(base64Pdf,HttpStatus.OK);
+		
 	}
 
 }
