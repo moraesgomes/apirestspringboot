@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,6 +41,7 @@ import com.google.gson.Gson;
 
 import curso.apirest.model.Profissao;
 import curso.apirest.model.Telefone;
+import curso.apirest.model.UserChart;
 import curso.apirest.model.UserReport;
 import curso.apirest.model.Usuario;
 import curso.apirest.model.UsuarioDTO;
@@ -69,6 +71,9 @@ public class UsuarioController {
 	
 	@Autowired
 	private ServiceRelatorio serviceRelatorio;
+	
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
 
 	@GetMapping(value = "/{id}", produces = "application/json")
 	@CacheEvict(value = "cacheuser", allEntries = true)
@@ -321,6 +326,29 @@ public class UsuarioController {
 		String base64Pdf ="data:application/pdf;base64," +  Base64.encodeBase64String(pdf);
 		
 		return new ResponseEntity<String>(base64Pdf,HttpStatus.OK);
+		
+	}
+	
+	
+	@GetMapping(value = "/grafico" , produces = "application/json")
+	public ResponseEntity<UserChart> grafico(){
+		
+		UserChart userChart = new UserChart();
+		
+	    List<String> resulatdo = jdbcTemplate.queryForList("select array_agg(nome) from usuario where salario  > 0 and nome <> '' union all select cast(array_agg(salario) as character varying[])from usuario where salario > 0 and nome <> ''",String.class);
+	    
+	    if(!resulatdo.isEmpty()) {
+	    	
+	    	String nomes = resulatdo.get(0).replaceAll("\\{", "").replaceAll("\\}", "");
+	    	String salario = resulatdo.get(1).replaceAll("\\{", "").replaceAll("\\}", "");
+	    	
+	    	userChart.setNome(nomes);
+	    	userChart.setSalario(salario);
+		
+	    }
+		
+		return new ResponseEntity<UserChart>(userChart,HttpStatus.OK);
+		
 		
 	}
 
